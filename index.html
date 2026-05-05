@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nishith's Paraphraser</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --violet: #7c3aed;
+      --violet-light: #ede9fe;
+      --violet-mid: #a78bfa;
+      --pink: #db2777;
+      --pink-light: #fce7f3;
+      --teal: #0d9488;
+      --teal-light: #ccfbf1;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --bg: #faf5ff;
+      --surface: #ffffff;
+      --border: #e9d5ff;
+      --text: #1e1b2e;
+      --muted: #6d6888;
+      --hint: #c4b5fd;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 3rem;
+      background-image: radial-gradient(circle at 20% 10%, #ede9fe 0%, transparent 40%),
+                        radial-gradient(circle at 80% 80%, #fce7f3 0%, transparent 40%);
+    }
+
+    .app { width: 100%; max-width: 860px; }
+
+    /* ── Header ── */
+    .header { margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--violet), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #fff;
+    }
+    .brand h1 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .brand h1 span { color: var(--violet); }
+    .header p { font-size: 13px; color: var(--muted); margin-left: 46px; }
+    .badge {
+      font-size: 11px; font-weight: 600; padding: 4px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--violet-light), var(--pink-light));
+      color: var(--violet);
+      border: 1px solid #ddd6fe;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Ollama Settings ── */
+    .api-key-bar {
+      display: flex; gap: 8px; margin-bottom: 6px; align-items: center;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 14px;
+    }
+    .api-key-bar label { font-size: 12px; font-weight: 600; color: var(--violet); white-space: nowrap; letter-spacing: 0.05em; }
+    .api-key-bar input {
+      flex: 1; padding: 4px 8px;
+      border: none; background: transparent;
+      font-size: 13px; font-family: inherit; color: var(--text); outline: none;
+    }
+    .api-key-bar input::placeholder { color: var(--hint); }
+
+    .api-hint {
+      font-size: 11.5px; color: var(--muted);
+      margin-bottom: 1.25rem;
+      padding: 0 4px;
+    }
+    .api-hint a { color: var(--violet); text-decoration: none; font-weight: 600; }
+    .api-hint a:hover { text-decoration: underline; }
+
+    /* ── Mode pills ── */
+    .mode-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .mode-btn {
+      font-size: 12px; font-weight: 600;
+      padding: 6px 16px; border-radius: 999px;
+      border: 1.5px solid transparent;
+      background: var(--surface);
+      cursor: pointer; transition: all 0.18s ease;
+      font-family: inherit;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+    .mode-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(124,58,237,0.12); }
+
+    .mode-btn[data-color="violet"]  { --mc: var(--violet);  --ml: var(--violet-light);  --mb: #ddd6fe; }
+    .mode-btn[data-color="pink"]    { --mc: var(--pink);    --ml: var(--pink-light);    --mb: #fbcfe8; }
+    .mode-btn[data-color="teal"]    { --mc: var(--teal);    --ml: var(--teal-light);    --mb: #99f6e4; }
+    .mode-btn[data-color="amber"]   { --mc: var(--amber);   --ml: var(--amber-light);   --mb: #fde68a; }
+    .mode-btn[data-color="blue"]    { --mc: var(--blue);    --ml: var(--blue-light);    --mb: #bfdbfe; }
+    .mode-btn[data-color="green"]   { --mc: var(--green);   --ml: var(--green-light);   --mb: #bbf7d0; }
+
+    .mode-btn.active {
+      background: var(--ml);
+      color: var(--mc);
+      border-color: var(--mb);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* ── Panels ── */
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1rem; }
+    @media (max-width: 600px) { .panels { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      display: flex; flex-direction: column;
+      min-height: 250px; overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .panel:focus-within { box-shadow: 0 0 0 3px #ddd6fe; border-color: var(--violet-mid); }
+
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1.5px solid var(--border);
+    }
+    .panel.left .panel-header { background: linear-gradient(90deg, #ede9fe, #faf5ff); }
+    .panel.right .panel-header { background: linear-gradient(90deg, #fce7f3, #faf5ff); }
+
+    .panel-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .panel.left .panel-label  { color: var(--violet); }
+    .panel.right .panel-label { color: var(--pink); }
+
+    .panel-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      width: 30px; height: 30px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: #fff;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 14px; transition: all 0.15s; font-family: inherit;
+    }
+    .icon-btn:hover { background: var(--violet-light); color: var(--violet); border-color: #ddd6fe; }
+
+    textarea {
+      flex: 1; padding: 14px 16px;
+      border: none; background: transparent;
+      font-size: 14px; font-family: inherit; color: var(--text);
+      resize: none; line-height: 1.7; outline: none;
+    }
+    textarea::placeholder { color: #d8b4fe; }
+
+    .panel-footer {
+      padding: 8px 16px;
+      border-top: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: #fdfcff;
+    }
+    .word-count { font-size: 12px; color: var(--hint); }
+    .tag {
+      font-size: 11px; font-weight: 600;
+      padding: 2px 10px; border-radius: 999px;
+      background: var(--violet-light); color: var(--violet);
+      border: 1px solid #ddd6fe;
+    }
+
+    .output-placeholder {
+      flex: 1; padding: 14px 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px;
+    }
+    .placeholder-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--pink-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--pink);
+    }
+    .placeholder-text { font-size: 13px; color: #f9a8d4; text-align: center; line-height: 1.6; }
+
+    .output-text {
+      flex: 1; padding: 14px 16px;
+      font-size: 14px; color: var(--text); line-height: 1.7;
+      display: none; white-space: pre-wrap;
+    }
+
+    .loading-text {
+      flex: 1; padding: 14px 16px;
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+    }
+    .spinner {
+      width: 24px; height: 24px;
+      border: 2.5px solid var(--pink-light);
+      border-top-color: var(--pink);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text span { font-size: 13px; color: var(--pink); font-weight: 500; }
+
+    /* ── Strength slider ── */
+    .strength-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px; margin-bottom: 10px;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px;
+    }
+    .strength-label { font-size: 13px; color: var(--muted); white-space: nowrap; font-weight: 500; }
+    input[type=range] { flex: 1; height: 4px; accent-color: var(--violet); cursor: pointer; }
+    .strength-val { font-size: 13px; font-weight: 700; color: var(--violet); min-width: 62px; text-align: right; }
+
+    /* ── Paraphrase button ── */
+    .paraphrase-btn {
+      width: 100%; padding: 14px;
+      border-radius: 12px; border: none;
+      background: linear-gradient(135deg, var(--violet) 0%, var(--pink) 100%);
+      color: #fff; font-size: 15px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+    }
+    .paraphrase-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+    .paraphrase-btn:active { transform: translateY(0); }
+    .paraphrase-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── Error ── */
+    .error-msg {
+      font-size: 13px; color: #be123c;
+      padding: 10px 14px; background: #fff1f2;
+      border-radius: 8px; margin-top: 10px;
+      border: 1px solid #fecdd3; display: none;
+    }
+
+    /* ── Footer ── */
+    .footer { text-align: center; margin-top: 2rem; font-size: 12px; color: var(--hint); }
+    .footer span { color: var(--violet); font-weight: 600; }
+
+    /* ── Ollama badge ── */
+    .powered-by {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; padding: 4px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #e8f0fe, #fce8ff);
+      color: #1a73e8;
+      border: 1px solid #c5d8fd;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="brand">
+        <div class="brand-icon">✦</div>
+        <h1><span>Nishith's</span> Paraphraser</h1>
+      </div>
+      <p>Rewrite any text in a different tone or style using a local Ollama model</p>
+    </div>
+    <span class="powered-by">✦ Powered by Ollama</span>
+  </div>
+
+  <div class="api-key-bar">
+    <label for="ollama-url">OLLAMA URL</label>
+    <input type="text" id="ollama-url" value="http://localhost:11434" />
+  </div>
+  <div class="api-key-bar">
+    <label for="ollama-model">MODEL</label>
+    <input type="text" id="ollama-model" value="llama3.2" placeholder="Example: llama3.2, mistral, qwen2.5" />
+  </div>
+  <p class="api-hint">
+    Runs locally through Ollama. First install Ollama, then run
+    <strong>ollama pull llama3.2</strong> and <strong>ollama serve</strong>.
+    No API key is required.
+  </p>
+
+  <div class="mode-row">
+    <button class="mode-btn active" data-color="violet" onclick="setMode(this,'Standard')">⚡ Standard</button>
+    <button class="mode-btn" data-color="blue"   onclick="setMode(this,'Formal')">🏛 Formal</button>
+    <button class="mode-btn" data-color="teal"   onclick="setMode(this,'Casual')">😊 Casual</button>
+    <button class="mode-btn" data-color="amber"  onclick="setMode(this,'Concise')">✂️ Concise</button>
+    <button class="mode-btn" data-color="green"  onclick="setMode(this,'Academic')">🎓 Academic</button>
+    <button class="mode-btn" data-color="pink"   onclick="setMode(this,'Creative')">🎨 Creative</button>
+  </div>
+
+  <div class="panels">
+    <div class="panel left">
+      <div class="panel-header">
+        <span class="panel-label">Original Text</span>
+        <button class="icon-btn" onclick="clearInput()" title="Clear">✕</button>
+      </div>
+      <textarea id="input-text" placeholder="Paste or type your text here..." oninput="updateCount()"></textarea>
+      <div class="panel-footer">
+        <span class="word-count" id="word-count">0 words</span>
+        <span class="tag" id="mode-tag">Standard</span>
+      </div>
+    </div>
+
+    <div class="panel right">
+      <div class="panel-header">
+        <span class="panel-label">Paraphrased</span>
+        <div class="panel-actions">
+          <button class="icon-btn" onclick="copyOutput()" title="Copy" id="copy-btn">⎘</button>
+        </div>
+      </div>
+      <div class="output-placeholder" id="placeholder">
+        <div class="placeholder-icon">✦</div>
+        <span class="placeholder-text">Your paraphrased text<br>will appear here</span>
+      </div>
+      <div class="loading-text" id="loading">
+        <div class="spinner"></div>
+        <span>Paraphrasing...</span>
+      </div>
+      <div class="output-text" id="output-text"></div>
+      <div class="panel-footer">
+        <span class="word-count" id="out-word-count">0 words</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="strength-row">
+    <span class="strength-label">Rewrite strength</span>
+    <input type="range" min="1" max="3" step="1" value="2" id="strength-slider" oninput="updateStrength(this.value)" />
+    <span class="strength-val" id="strength-label">Balanced</span>
+  </div>
+
+  <button class="paraphrase-btn" id="para-btn" onclick="runParaphrase()">✦ Paraphrase →</button>
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="footer">Made by <span>Nishith Ranjan Biswas</span></div>
+</div>
+
+<script>
+  let currentMode = 'Standard';
+  const strengthLabels = { 1: 'Light', 2: 'Balanced', 3: 'Heavy' };
+
+  const modePrompts = {
+    Standard:  'Rewrite the following text naturally, keeping the same meaning but using different wording.',
+    Formal:    'Rewrite the following text in a professional and formal tone suitable for business or official communication.',
+    Casual:    'Rewrite the following text in a relaxed, friendly, and conversational tone.',
+    Concise:   'Rewrite the following text as concisely as possible. Remove unnecessary words. Keep only the core meaning.',
+    Academic:  'Rewrite the following text in an academic style with precise language, formal structure, and scholarly tone.',
+    Creative:  'Rewrite the following text in a creative and engaging way. Use vivid language and varied sentence structure.',
+  };
+
+  const strengthInstructions = {
+    1: 'Make only minor changes — adjust a few words and phrases while keeping most of the original structure intact.',
+    2: 'Make moderate changes — rephrase sentences and vary the vocabulary noticeably.',
+    3: 'Make significant changes — completely restructure sentences and use entirely different wording throughout.',
+  };
+
+  function setMode(btn, mode) {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = mode;
+    document.getElementById('mode-tag').textContent = mode;
+  }
+
+  function updateStrength(val) {
+    document.getElementById('strength-label').textContent = strengthLabels[val];
+  }
+
+  function updateCount() {
+    const text = document.getElementById('input-text').value.trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    document.getElementById('word-count').textContent = words + ' word' + (words !== 1 ? 's' : '');
+  }
+
+  function clearInput() {
+    document.getElementById('input-text').value = '';
+    updateCount();
+  }
+
+  function copyOutput() {
+    const text = document.getElementById('output-text').textContent;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓';
+      setTimeout(() => { btn.textContent = '⎘'; }, 1500);
+    });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError() {
+    document.getElementById('error-msg').style.display = 'none';
+  }
+
+  function setLoading(on) {
+    document.getElementById('placeholder').style.display = on ? 'none' : 'flex';
+    document.getElementById('loading').style.display = on ? 'flex' : 'none';
+    document.getElementById('output-text').style.display = 'none';
+    document.getElementById('para-btn').disabled = on;
+  }
+
+  function showOutput(text) {
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
+    const outEl = document.getElementById('output-text');
+    outEl.textContent = text;
+    outEl.style.display = 'block';
+    const words = text.trim().split(/\s+/).length;
+    document.getElementById('out-word-count').textContent = words + ' word' + (words !== 1 ? 's' : '');
+  }
+
+  async function runParaphrase() {
+    hideError();
+
+    const input = document.getElementById('input-text').value.trim();
+    const ollamaUrl = document.getElementById('ollama-url').value.trim().replace(/\/$/, '');
+    const model = document.getElementById('ollama-model').value.trim();
+    const strength = document.getElementById('strength-slider').value;
+
+    if (!input) { showError('Please enter some text to paraphrase.'); return; }
+    if (!ollamaUrl) { showError('Please enter your Ollama server URL.'); return; }
+    if (!model) { showError('Please enter an Ollama model name, for example llama3.2.'); return; }
+
+    setLoading(true);
+
+    const prompt = `${modePrompts[currentMode]} ${strengthInstructions[strength]} Return ONLY the paraphrased text with no introduction, explanation, or quotation marks.\n\nText to paraphrase:\n${input}`;
+
+    try {
+      const response = await fetch(`${ollamaUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: model,
+          prompt: prompt,
+          stream: false,
+          options: {
+            temperature: 0.7,
+            num_predict: 1024
+          }
+        })
+      });
+
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (_) {
+        throw new Error('Ollama did not return valid JSON. Check whether Ollama is running.');
+      }
+
+      if (!response.ok) {
+        const msg = data.error || response.statusText;
+        showError('Ollama API error: ' + msg);
+        setLoading(false);
+        document.getElementById('placeholder').style.display = 'flex';
+        return;
+      }
+
+      const result = (data.response || '').trim();
+
+      if (!result) {
+        showError('Ollama returned an empty response. Try another model or a shorter input.');
+        document.getElementById('placeholder').style.display = 'flex';
+      } else {
+        showOutput(result);
+      }
+
+    } catch (err) {
+      showError('Network error: ' + err.message + '. Make sure Ollama is running at the URL above and CORS is allowed.');
+      document.getElementById('placeholder').style.display = 'flex';
+    }
+
+    document.getElementById('para-btn').disabled = false;
+    document.getElementById('loading').style.display = 'none';
+  }
+</script>
+</body>
+</html>
